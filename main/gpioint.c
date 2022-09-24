@@ -89,8 +89,8 @@ static void configure_gpio()
      * 
     */
     gpio_config_t io_conf2 = {
-        io_conf2.intr_type = GPIO_INTR_POSEDGE, //启用下降沿中断
-        .mode = GPIO_MODE_INPUT,//输出模式
+        io_conf2.intr_type = GPIO_INTR_ANYEDGE, //启用下降沿中断
+        .mode = GPIO_MODE_INPUT,//输入模式
         .pin_bit_mask = GPIO_INPUT_PIN_SEL,//设置gpio,可以同时设置多个端口
         .pull_down_en = 0, //不下拉
         .pull_up_en = 1 //上拉
