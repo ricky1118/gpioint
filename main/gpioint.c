@@ -33,12 +33,18 @@ static const char *TAG = "gpio_test01";
 
 static xQueueHandle gpio_evt_queue = NULL;//设置消息队列，用于传递中断信息
 /**********
+ * 2022/9/27
  * GPIO状态
  * GPIO4:上拉输入，上升沿和下降沿中断
  * GPIO5:上拉输入，下降沿中断
  * GPIO15:推挽输出
  * GPIO16:推挽输出
  * 实现功能:GPIO15连接到GPIO4  GPIO16连接到GPIO5,利用输出信号，触发GPIO4,GPIO5上的中断
+ * 学习结论和疑问：1、(已经解决，原因是:配置结构体初值出错)配置输入接口结构体时，无论配置成上升沿还是下降沿触发都不能读到状态变化，
+ * 设置成任一边沿模式能读到状态变化，不知道原因。
+ * 反复测试得到结果是：结构体方式配置的上升下降触发不能使用，但是通过gpio_set_intr_type设置能有效果
+ * 可能的原因https://blog.csdn.net/m0_50064262/article/details/115288638 该文章第三部分有可能解释
+ * 2、配置GPIO时，位掩码设置不能理解，有道云相应GPIO文章一有讲解用法，原理不懂
  * *******************************************************************/
 //真正的中断服务函数，这里只做一件事，通过队列把中断消息打包发送出去
 static void IRAM_ATTR gpio_isr_handle(void* arg)
@@ -77,7 +83,7 @@ static void configure_gpio()
      * 
     */
     gpio_config_t io_conf = {
-        io_conf.intr_type = GPIO_INTR_DISABLE,//不启用中断
+        .intr_type = GPIO_INTR_DISABLE,//不启用中断
         .mode = GPIO_MODE_OUTPUT,//输出模式
         .pin_bit_mask = GPIO_OUTPUT_PIN_SEL,//设置gpio,可以同时设置多个端口
         .pull_down_en = 0, //不上拉
@@ -89,15 +95,15 @@ static void configure_gpio()
      * 
     */
     gpio_config_t io_conf2 = {
-        io_conf2.intr_type = GPIO_INTR_ANYEDGE, //启用下降沿中断
+        .intr_type = GPIO_INTR_POSEDGE, //启用上升沿沿中断
         .mode = GPIO_MODE_INPUT,//输入模式
         .pin_bit_mask = GPIO_INPUT_PIN_SEL,//设置gpio,可以同时设置多个端口
-        .pull_down_en = 0, //不下拉
-        .pull_up_en = 1 //上拉
+        .pull_down_en = 1, //下拉
+        .pull_up_en = 0 //不上拉
     };
     gpio_config(&io_conf2);//使能端口
-    gpio_set_intr_type(GPIO_INPUT_IO_0,GPIO_INTR_ANYEDGE);//输入0设置为任意边沿中断
-    gpio_set_intr_type(GPIO_INPUT_IO_1,GPIO_INTR_ANYEDGE);//输入1设置为任意边沿中断
+ //   gpio_set_intr_type(GPIO_INPUT_IO_0,GPIO_INTR_ANYEDGE);//输入0设置为任意边沿中断
+ //   gpio_set_intr_type(GPIO_INPUT_IO_1,GPIO_INTR_ANYEDGE);//输入1设置为任意边沿中断
     
 }
 
